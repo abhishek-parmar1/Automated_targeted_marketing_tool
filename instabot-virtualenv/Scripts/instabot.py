@@ -30,7 +30,7 @@ def myDetails():
         print "Sorry something went wrong \nError : Status code other than 200 was recieved"
 
 # function to get recent post id and download it of user itself
-def getRecentPost(user_type):
+def getRecentPost(user_type,action):
     url = BASE_URL + "users/" + user_type + "/media/recent/?access_token=" + ACCESS_TOKEN
     data = requests.get(url)
     data = data.json()
@@ -39,14 +39,16 @@ def getRecentPost(user_type):
         if len(data['data']):
             post_id = data['data'][0]['id']
             if data['data'][0]['type'] == "image":
-                image_url = data['data'][0]['images']['standard_resolution']['url']
-                urlretrieve(image_url, 'postImage.png');
-                print "Post image downloaded"
+                if action == "Download Post":
+                    image_url = data['data'][0]['images']['standard_resolution']['url']
+                    urlretrieve(image_url, 'postImage.png');
+                    print "Post image downloaded"
                 return post_id
             elif data['data'][0]['type'] == "video":
-                video_url = data['data'][0]['videos']['standard_resolution']['url']
-                urlretrieve(video_url, 'postVideo.png');
-                print "Post video downloaded"
+                if action == "Download Post":
+                    video_url = data['data'][0]['videos']['standard_resolution']['url']
+                    urlretrieve(video_url, 'postVideo.png');
+                    print "Post video downloaded"
                 return post_id
             else:
                 print "post is neither image nor video"
@@ -60,7 +62,7 @@ def getRecentPost(user_type):
 
 # function to get recent post of user itself
 def myRecentPost():
-    return getRecentPost("self")
+    return getRecentPost("self","Download Post")
 
 # function to get other user id by their name
 def getOtherUserId(other_user_name):
@@ -81,7 +83,25 @@ def getOtherUserId(other_user_name):
 # function to get other user recent post
 def getOtherUserPost(other_user_name):
     other_user_id = getOtherUserId(other_user_name)
-    return getRecentPost(other_user_id)
+    if other_user_id != "none":
+        return getRecentPost(other_user_id,"Download Post")
+    else:
+        return "none"
+
+# function to like other user post
+def likeOtherUserPost(other_user_name):
+    other_user_id = getOtherUserId(other_user_name)
+    post_id = getRecentPost(other_user_id,"Like Post")
+    data = {
+        'access_token': ACCESS_TOKEN
+    }
+    url = BASE_URL + "media/" + str(post_id) + "/likes"
+    info = requests.post(url, data)
+    info = info.json()
+    if info['meta']['code'] == 200:
+        print other_user_name + " recent post liked"
+    else:
+        print "Sorry something went wrong \nError : Status code other than 200 was recieved"
 
 ############### menu ###################################################
 def menu(other_user_name):
@@ -90,7 +110,7 @@ def menu(other_user_name):
         if user_choice == 1:
             print other_user_name + " recent post id is : " + getOtherUserPost(other_user_name)
         elif user_choice == 2:
-            print user_choice
+            likeOtherUserPost(other_user_name)
         elif user_choice == 3:
             print user_choice
         elif user_choice == 4:
