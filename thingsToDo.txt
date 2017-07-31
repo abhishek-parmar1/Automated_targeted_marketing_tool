@@ -1,0 +1,1 @@
+1> Try and choose the post in a creative way, for example the one with minimum number likes, or whose caption has a particular text or by asking the criteria from the user through the console
