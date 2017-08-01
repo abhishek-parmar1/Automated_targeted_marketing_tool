@@ -43,16 +43,14 @@ def getRecentPost(user_type,action):
                     image_url = data['data'][0]['images']['standard_resolution']['url']
                     urlretrieve(image_url, 'postImage.png');
                     print "Post image downloaded"
-                return post_id
             elif data['data'][0]['type'] == "video":
                 if action == "Download Post":
                     video_url = data['data'][0]['videos']['standard_resolution']['url']
                     urlretrieve(video_url, 'postVideo.png');
                     print "Post video downloaded"
-                return post_id
             else:
                 print "post is neither image nor video"
-                return post_id
+            return post_id
         else:
             print "Sorry no post found"
             return "none"
