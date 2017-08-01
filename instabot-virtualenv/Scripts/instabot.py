@@ -92,28 +92,72 @@ def getOtherUserPost(other_user_name):
 def likeOtherUserPost(other_user_name):
     other_user_id = getOtherUserId(other_user_name)
     post_id = getRecentPost(other_user_id,"Like Post")
-    data = {
-        'access_token': ACCESS_TOKEN
-    }
-    url = BASE_URL + "media/" + str(post_id) + "/likes"
-    info = requests.post(url, data)
-    info = info.json()
-    if info['meta']['code'] == 200:
-        print other_user_name + " recent post liked"
-    else:
-        print "Sorry something went wrong \nError : Status code other than 200 was recieved"
+    if post_id != "none":
+        data = {
+            'access_token': ACCESS_TOKEN
+        }
+        url = BASE_URL + "media/" + str(post_id) + "/likes"
+        info = requests.post(url, data)
+        info = info.json()
+        if info['meta']['code'] == 200:
+            print other_user_name + " recent post liked"
+        else:
+            print "Sorry something went wrong \nError : Status code other than 200 was recieved"
+
+# function to get the comments on the other user posts
+def getCommentOtherUserPost(other_user_name):
+    other_user_id = getOtherUserId(other_user_name)
+    post_id = getRecentPost(other_user_id, "Get Comments")
+    if post_id != "none":
+        url = BASE_URL + "media/" + str(post_id) + "/comments?access_token=" + ACCESS_TOKEN
+        info = requests.get(url)
+        info = info.json()
+        if info['meta']['code'] == 200:
+            if len(info['data']):
+                print "comments are : "
+                for index in  info['data']:
+                    print index['from']['username'] + " : " + index['text']
+            else:
+                print " no comments on the post "
+        else:
+            print "Sorry something went wrong \nError : Status code other than 200 was recieved"
+
+# function to comment on other user post
+def commentOtherUserPost(other_user_name):
+    other_user_id = getOtherUserId(other_user_name)
+    post_id = getRecentPost(other_user_id, "Comment Post")
+    if post_id != "none":
+        while True:
+            text = raw_input("enter the commment text : ")
+            if len(text) and len(text.strip()) :
+                break
+            else:
+                print "Please provide some text in comment"
+        data = {
+            'access_token': ACCESS_TOKEN,
+            'text' : text
+        }
+        url = BASE_URL + "media/" + str(post_id) + "/comments"
+        info = requests.post(url, data)
+        info = info.json()
+        if info['meta']['code'] == 200:
+            print " commented on the recent post of " + other_user_name
+        else:
+            print "Sorry something went wrong \nError : Status code other than 200 was recieved"
 
 ############### menu ###################################################
 def menu(other_user_name):
     while True:
-        user_choice = int(raw_input("Select : \n1> Get other user recent post \n2> Like other user recent Post \n3> Comment on other user recent post \n4> Exit \n:"))
+        user_choice = int(raw_input("Select : \n1> Get other user recent post \n2> Like other user recent Post \n3> Get Comments on other user recent post \n4> Comment on other user recent post \n5> Exit \n:"))
         if user_choice == 1:
             print other_user_name + " recent post id is : " + getOtherUserPost(other_user_name)
         elif user_choice == 2:
             likeOtherUserPost(other_user_name)
         elif user_choice == 3:
-            print user_choice
-        elif user_choice == 4:
+            getCommentOtherUserPost(other_user_name)
+        elif user_choice ==4:
+            commentOtherUserPost(other_user_name)
+        elif user_choice == 5:
             break
         else:
             print "Enter valid input"
