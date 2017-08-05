@@ -105,7 +105,7 @@ def getOtherUserPost(user_name):
 # function to get the likes on the other user posts
 def getLikeUserPost(user_id, post_id):
     if user_id != "self":
-        post_id = getRecentPost(user_id, "Get Comments")
+        post_id = getRecentPost(user_id, "Get Likes")
     if post_id != "none":
         url = BASE_URL + "media/" + str(post_id) + "/likes?access_token=" + ACCESS_TOKEN
         response = requests.get(url)
@@ -159,12 +159,16 @@ def commentUserPost(user_name):
     user_id = getUserId(user_name)
     post_id = getRecentPost(user_id, "Comment Post")
     if post_id != "none":
+        print "The total length of the comment cannot exceed 300 characters"
+        print "The comment cannot contain more than 4 hashtags"
+        print "The comment cannot contain more than 1 URL"
+        print "The comment cannot consist of all capital letters"
         while True:
             text = raw_input("enter the commment text : ")
-            if len(text) and len(text.strip()) :
+            if len(text) and len(text.strip()) and len(text)<=300 :
                 break
             else:
-                print "Please provide some text in comment"
+                print "Please provide some text in comment less than 300 characters"
         data = {
             'access_token': ACCESS_TOKEN,
             'text' : text
@@ -175,7 +179,33 @@ def commentUserPost(user_name):
         if info['meta']['code'] == 200:
             print "commented on the recent post of " + user_name
         else:
-            print "Sorry something went wrong \nError : Status code other than 200 was recieved"
+            print "Sorry something went wrong, \neither you have violated any of the above rule or Status code other than 200 was recieved"
+
+# function to get recent liked post by the user itself
+def getRecentLikedPost():
+    url = BASE_URL + "users/self/media/liked?access_token=" + ACCESS_TOKEN
+    response = requests.get(url)
+    response = response.json()
+    if response['meta']['code'] == 200:
+        if len(response['data']):
+            post_id = response['data'][0]['id']
+            if response['data'][0]['type'] == "image":
+                image_url = response['data'][0]['images']['standard_resolution']['url']
+                urlretrieve(image_url, 'postImage.png');
+                print "Post image downloaded"
+                getPostDetails("self", post_id)
+            elif response['data'][0]['type'] == "video":
+                video_url = response['data'][0]['videos']['standard_resolution']['url']
+                urlretrieve(video_url, 'postVideo.png');
+                print "Post video downloaded"
+                getPostDetails("self", post_id)
+            else:
+                print "recent liked post is neither image nor video"
+        else:
+            print "there are no posts liked by you"
+    else:
+        print "Sorry something went wrong \nError : Status code other than 200 was recieved"
+
 
 ############### menu ###################################################
 def menu(other_user_name):
@@ -201,15 +231,17 @@ def menu(other_user_name):
 # main program starts here
 print "Hello User"
 while True:
-    user_choice = int(raw_input("Select : \n1> Display your details \n2> Get your recent post details \n3> Search other user \n4> Exit \n:"))
+    user_choice = int(raw_input("Select : \n1> Display your details \n2> Get your recent post details \n3> Get recent post liked by you \n4> Search other user \n5> Exit \n:"))
     if user_choice == 1:
         myDetails()
     elif user_choice == 2:
         print "Your recent post id is : " + myRecentPost()
     elif user_choice == 3:
+        getRecentLikedPost()
+    elif user_choice == 4:
         other_user_name = raw_input("Enter User Name (of another User) : ")
         menu(other_user_name)
-    elif user_choice == 4 :
+    elif user_choice == 5 :
         break
     else:
         print "Enter valid input"
