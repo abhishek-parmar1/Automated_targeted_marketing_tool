@@ -67,9 +67,9 @@ def getPostDetails(user_id, post_id):
     response = response.json()
     if response['meta']['code'] == 200:
         print "count of likes on the post is " + str(response['data']['likes']['count'])
-        getLikeUserPost(user_id, post_id)
+        getLikeCommentUserPost(user_id, post_id, "Like")
         print "count of comments on the post is " + str(response['data']['comments']['count'])
-        getCommentUserPost(user_id, post_id)
+        getLikeCommentUserPost(user_id, post_id, "Comment")
     else:
         print "Sorry something went wrong \nError : Status code other than 200 was recieved"
 
@@ -138,39 +138,26 @@ def likeCommentUserPost( user_name, action, post_id, comment_text):
         else:
             print "Sorry something went wrong \nError : Status code other than 200 was recieved"
 
-# function to get the likes on the user posts
-def getLikeUserPost(user_id, post_id):
+# function to get likes and comments on the user post
+def getLikeCommentUserPost(user_id, post_id, action):
     if user_id != "self":
-        post_id = getRecentPost(user_id, "Get Likes")
+        post_id = getRecentPost(user_id, "Get Likes Comments")
     if post_id != "none":
-        url = BASE_URL + "media/" + str(post_id) + "/likes?access_token=" + ACCESS_TOKEN
+        url = BASE_URL + "media/" + str(post_id) + "/" + ("likes" if action == "Like" else "comments") + "?access_token=" + ACCESS_TOKEN
         response = requests.get(url)
         response = response.json()
         if response['meta']['code'] == 200:
             if len(response['data']):
-                print "recently liked by : "
-                for index in response['data']:
-                    print index['username']
+                if action == "Like":
+                    print "recently liked by : "
+                    for index in response['data']:
+                        print index['username']
+                elif action == "Comment":
+                    print "recent comments are : "
+                    for index in response['data']:
+                        print index['from']['username'] + " : " + index['text']
             else:
-                print "no recent likes on the post "
-        else:
-            print "Sorry something went wrong \nError : Status code other than 200 was recieved"
-
-# function to get the comments on the user posts
-def getCommentUserPost(user_id, post_id):
-    if user_id != "self":
-        post_id = getRecentPost(user_id, "Get Comments")
-    if post_id != "none":
-        url = BASE_URL + "media/" + str(post_id) + "/comments?access_token=" + ACCESS_TOKEN
-        response = requests.get(url)
-        response = response.json()
-        if response['meta']['code'] == 200:
-            if len(response['data']):
-                print "recent comments are : "
-                for index in  response['data']:
-                    print index['from']['username'] + " : " + index['text']
-            else:
-                print "no recent comments on the post "
+                print "no recent " + ("likes" if action == "Like" else "comments") + " on the post "
         else:
             print "Sorry something went wrong \nError : Status code other than 200 was recieved"
 
@@ -234,12 +221,12 @@ def menu(other_user_name):
             print other_user_name + " recent post id is : " + getOtherUserPost(other_user_name)
         elif user_choice == 2:
             user_id = getUserId(other_user_name)
-            getLikeUserPost(user_id, "anything")
+            getLikeCommentUserPost(user_id, "anything", "Like")
         elif user_choice == 3:
             likeCommentUserPost(other_user_name,"Like", "default", "")
         elif user_choice == 4:
             user_id = getUserId(other_user_name)
-            getCommentUserPost(user_id, "anything")
+            getLikeCommentUserPost(user_id, "anything", "Comment")
         elif user_choice == 5:
             likeCommentUserPost(other_user_name,"Comment", "default", "")
         elif user_choice == 6:
