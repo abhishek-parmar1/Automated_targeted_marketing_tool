@@ -29,7 +29,7 @@ def myDetails():
     else:
         print "Sorry something went wrong \nError : Status code other than 200 was recieved"
 
-# function to get recent post id and download it of user itself
+# function to get recent post id and download it
 def getRecentPost(user_id,action):
     url = BASE_URL + "users/" + user_id + "/media/recent/?access_token=" + ACCESS_TOKEN
     response = requests.get(url)
@@ -102,7 +102,43 @@ def getOtherUserPost(user_name):
     else:
         return "none"
 
-# function to get the likes on the other user posts
+# function to like or comment on the user post
+def likeCommentUserPost( user_name, action, post_id, comment_text):
+    if post_id == "default":
+        user_id = getUserId(user_name)
+        post_id = getRecentPost(user_id, "Like Comment Post")
+    if post_id != "none":
+        if action == "Like":
+            data = {
+                'access_token': ACCESS_TOKEN
+            }
+            action = "likes"
+        elif action == "Comment":
+            if len(comment_text) == 0:
+                print "The total length of the comment cannot exceed 300 characters"
+                print "The comment cannot contain more than 4 hashtags"
+                print "The comment cannot contain more than 1 URL"
+                print "The comment cannot consist of all capital letters"
+                while True:
+                    comment_text = raw_input("enter the commment text : ")
+                    if len(comment_text) and len(comment_text.strip()) and len(comment_text) <= 300:
+                        break
+                    else:
+                        print "Please provide some text in comment less than 300 characters"
+            data = {
+                'access_token': ACCESS_TOKEN,
+                'text': comment_text
+            }
+            action = "comments"
+        url = BASE_URL + "media/" + str(post_id) + "/" + action
+        info = requests.post(url, data)
+        info = info.json()
+        if info['meta']['code'] == 200:
+            print action + " is made on " + user_name + " recent post"
+        else:
+            print "Sorry something went wrong \nError : Status code other than 200 was recieved"
+
+# function to get the likes on the user posts
 def getLikeUserPost(user_id, post_id):
     if user_id != "self":
         post_id = getRecentPost(user_id, "Get Likes")
@@ -120,23 +156,7 @@ def getLikeUserPost(user_id, post_id):
         else:
             print "Sorry something went wrong \nError : Status code other than 200 was recieved"
 
-# function to like other user post
-def likeUserPost(user_name):
-    user_id = getUserId(user_name)
-    post_id = getRecentPost(user_id,"Like Post")
-    if post_id != "none":
-        data = {
-            'access_token': ACCESS_TOKEN
-        }
-        url = BASE_URL + "media/" + str(post_id) + "/likes"
-        info = requests.post(url, data)
-        info = info.json()
-        if info['meta']['code'] == 200:
-            print user_name + " recent post liked"
-        else:
-            print "Sorry something went wrong \nError : Status code other than 200 was recieved"
-
-# function to get the comments on the other user posts
+# function to get the comments on the user posts
 def getCommentUserPost(user_id, post_id):
     if user_id != "self":
         post_id = getRecentPost(user_id, "Get Comments")
@@ -153,33 +173,6 @@ def getCommentUserPost(user_id, post_id):
                 print "no recent comments on the post "
         else:
             print "Sorry something went wrong \nError : Status code other than 200 was recieved"
-
-# function to comment on other user post
-def commentUserPost(user_name):
-    user_id = getUserId(user_name)
-    post_id = getRecentPost(user_id, "Comment Post")
-    if post_id != "none":
-        print "The total length of the comment cannot exceed 300 characters"
-        print "The comment cannot contain more than 4 hashtags"
-        print "The comment cannot contain more than 1 URL"
-        print "The comment cannot consist of all capital letters"
-        while True:
-            text = raw_input("enter the commment text : ")
-            if len(text) and len(text.strip()) and len(text)<=300 :
-                break
-            else:
-                print "Please provide some text in comment less than 300 characters"
-        data = {
-            'access_token': ACCESS_TOKEN,
-            'text' : text
-        }
-        url = BASE_URL + "media/" + str(post_id) + "/comments"
-        info = requests.post(url, data)
-        info = info.json()
-        if info['meta']['code'] == 200:
-            print "commented on the recent post of " + user_name
-        else:
-            print "Sorry something went wrong, \neither you have violated any of the above rule or Status code other than 200 was recieved"
 
 # function to get recent liked post by the user itself
 def getRecentLikedPost():
@@ -206,24 +199,60 @@ def getRecentLikedPost():
     else:
         print "Sorry something went wrong \nError : Status code other than 200 was recieved"
 
+# function to market product and services by commenting on the post related to your product
+def marketProduct():
+    tag_name = raw_input("Enter type of post you want to target ( with respect to Post tags ) : ")
+    url = BASE_URL + "tags/" + tag_name + "/media/recent?access_token=" + ACCESS_TOKEN
+    response = requests.get(url)
+    response = response.json()
+    if response['meta']['code'] == 200:
+        if len(response['data']):
+            print "The total length of the comment cannot exceed 300 characters"
+            print "The comment cannot contain more than 4 hashtags"
+            print "The comment cannot contain more than 1 URL"
+            print "The comment cannot consist of all capital letters"
+            while True:
+                comment_text = raw_input("enter the commment text : ")
+                if len(comment_text) and len(comment_text.strip()) and len(comment_text) <= 300:
+                    break
+                else:
+                    print "Please provide some text in comment less than 300 characters"
+            for post in response['data']:
+                post_id = post['id']
+                likeCommentUserPost("Market Post", "Comment", post_id, comment_text)
+        else:
+            print "there are no posts related to this tag"
+    else:
+        print "Sorry something went wrong \nError : Status code other than 200 was recieved"
+
 
 ############### menu ###################################################
 def menu(other_user_name):
     while True:
-        user_choice = int(raw_input("Select : \n1> Get other user recent post details \n2> Get likes other user recent post \n3> Like other user recent Post \n4> Get Comments on other user recent post \n5> Comment on other user recent post \n6> Exit \n:"))
+        user_choice = int(raw_input("Select : \n1> Get other user recent post details \n2> Get recent likes other user recent post \n3> Like other user recent Post \n4> Get recent Comments on other user recent post \n5> Comment on other user recent post \n6> Exit \n:"))
         if user_choice == 1:
             print other_user_name + " recent post id is : " + getOtherUserPost(other_user_name)
         elif user_choice == 2:
             user_id = getUserId(other_user_name)
             getLikeUserPost(user_id, "anything")
         elif user_choice == 3:
-            likeUserPost(other_user_name)
+            likeCommentUserPost(other_user_name,"Like", "default", "")
         elif user_choice == 4:
             user_id = getUserId(other_user_name)
             getCommentUserPost(user_id, "anything")
         elif user_choice == 5:
-            commentUserPost(other_user_name)
+            likeCommentUserPost(other_user_name,"Comment", "default", "")
         elif user_choice == 6:
+            break
+        else:
+            print "Enter valid input"
+
+def extraFeatures():
+    while True:
+        user_choice = int(raw_input("Select : \n1> Marketing your Product or Services \n2> Exit\n:"))
+        if user_choice == 1:
+            marketProduct()
+        elif user_choice == 2:
             break
         else:
             print "Enter valid input"
@@ -231,7 +260,7 @@ def menu(other_user_name):
 # main program starts here
 print "Hello User"
 while True:
-    user_choice = int(raw_input("Select : \n1> Display your details \n2> Get your recent post details \n3> Get recent post liked by you \n4> Search other user \n5> Exit \n:"))
+    user_choice = int(raw_input("Select : \n1> Display your details \n2> Get your recent post details \n3> Get recent post liked by you \n4> Search other user \n5> Extra Options \n6> Exit \n:"))
     if user_choice == 1:
         myDetails()
     elif user_choice == 2:
@@ -241,7 +270,9 @@ while True:
     elif user_choice == 4:
         other_user_name = raw_input("Enter User Name (of another User) : ")
         menu(other_user_name)
-    elif user_choice == 5 :
+    elif user_choice == 5:
+        extraFeatures()
+    elif user_choice == 6 :
         break
     else:
         print "Enter valid input"
