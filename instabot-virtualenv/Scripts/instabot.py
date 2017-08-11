@@ -12,6 +12,10 @@ from access_token import ACCESS_TOKEN
 # to get the data in the url use this function urlretrieve
 from urllib import urlretrieve
 
+# import textblob library and the classfier for sentimental analysis
+from textblob import TextBlob
+from textblob.sentiments import NaiveBayesAnalyzer
+
 ############### all functions definations ##############################
 
 # function get user own details
@@ -212,6 +216,38 @@ def marketProduct():
     else:
         print "Sorry something went wrong \nError : Status code other than 200 was recieved"
 
+# function to delete a comment
+def deleteComment(post_id, comment_id):
+    url = BASE_URL + "media/" + post_id + "/comments/" + comment_id + "?access_token=" + ACCESS_TOKEN
+    response = requests.delete(url)
+    response = response.json()
+    if response['meta']['code'] == 200:
+        print "comment deleted"
+    else:
+        print "Sorry something went wrong \nError : Status code other than 200 was recieved"
+
+
+# function to delete negative comments from a user post
+def identifyNegativeComment(user_name):
+    user_id = getUserId(user_name)
+    if user_id != "none":
+        post_id = getRecentPost(user_id, "Get Post Id")
+        if post_id != "none":
+            url = BASE_URL + "media/" + post_id + "/comments?access_token=" + ACCESS_TOKEN
+            response = requests.get(url)
+            response = response.json()
+            if response['meta']['code'] == 200:
+                if len(response['data']):
+                    for index in response['data']:
+                        comment_text = index['text']
+                        blob = TextBlob(comment_text, analyzer=NaiveBayesAnalyzer())
+                        if blob.sentiment.classification == "neg":
+                            print comment_text
+                            deleteComment(post_id, index['id'])
+                else:
+                    print "there are no comments on the post"
+            else:
+                print "Sorry something went wrong \nError : Status code other than 200 was recieved"
 
 ############### menu ###################################################
 def menu(other_user_name):
@@ -236,10 +272,13 @@ def menu(other_user_name):
 
 def extraFeatures():
     while True:
-        user_choice = int(raw_input("Select : \n1> Marketing your Product or Services \n2> Exit\n:"))
+        user_choice = int(raw_input("Select : \n1> Marketing your Product or Services \n2> Delete negative comments from recent post of user \n3> Exit\n:"))
         if user_choice == 1:
             marketProduct()
         elif user_choice == 2:
+            other_user_name = raw_input("Enter the user name you want to target : ")
+            identifyNegativeComment(other_user_name)
+        elif user_choice == 3:
             break
         else:
             print "Enter valid input"
